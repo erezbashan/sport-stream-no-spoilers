@@ -16,7 +16,9 @@ const selectors = [
   '[class*="main__player-aside"]',                  // side bar with scores
   '[data-portal-name="OPTIONS_MENU_2"]',            // stupid control which has an image
   '[data-test-id="DURATION"]',                      // total duration
-
+  
+  // NBA
+  '#progress-bar-container',                        // entire progress bar and time container
 ];
 
 function showOverlay(with_timer) {

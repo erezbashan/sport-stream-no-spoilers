@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Sport Stream No Spoilers",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Remove spoilery things (like progress bars) in streams",
   "content_scripts": [
     {
-      "matches": ["https://www.mlb.com/tv/*", "https://www.dazn.com/*"], 
+      "matches": ["https://www.mlb.com/tv/*", "https://www.dazn.com/*", "https://*.nba.com/*"], 
       "js": ["main.js"],
       "run_at": "document_idle"
     }
