@@ -105,6 +105,10 @@ function main() {
     e.style.opacity = '0';
   });
 
+  document.querySelectorAll('.info-description').forEach(e => {
+    e.style.display = 'none';
+  });
+
   document.querySelectorAll('video').forEach(v => {
     if (v.hasAttribute('poster')) {
       v.removeAttribute('poster');
