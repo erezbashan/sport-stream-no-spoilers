@@ -100,6 +100,17 @@ function main() {
     });
   });
 
+  // Kan VOD specific hide rules
+  document.querySelectorAll('.news-card img').forEach(e => {
+    e.style.opacity = '0';
+  });
+
+  document.querySelectorAll('video').forEach(v => {
+    if (v.hasAttribute('poster')) {
+      v.removeAttribute('poster');
+    }
+  });
+
 }
 
 main();
