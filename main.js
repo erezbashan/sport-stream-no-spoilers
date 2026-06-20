@@ -1,5 +1,3 @@
-// console.log("running ...")
-
 const dazn_stream_pattern = /^https:\/\/www\.dazn\.com\/[^/]+\/fixture\/.+$/;
 const selectors = [
   // MLB
@@ -16,10 +14,27 @@ const selectors = [
   '[class*="main__player-aside"]',                  // side bar with scores
   '[data-portal-name="OPTIONS_MENU_2"]',            // stupid control which has an image
   '[data-test-id="DURATION"]',                      // total duration
-  
+  // Kan World Cup
+  '.col-stats',
+
   // NBA
   '#progress-bar-container',                        // entire progress bar and time container
 ];
+
+// Instantly inject CSS to prevent any flash of unstyled content
+const styleEl = document.createElement('style');
+styleEl.textContent = `
+  ${selectors.join(',\n  ')} { 
+      display: none !important; 
+  }
+  .news-card img { 
+      opacity: 0 !important; 
+  }
+  .info-description { 
+      display: none !important; 
+  }
+`;
+document.documentElement.appendChild(styleEl);
 
 function showOverlay(with_timer) {
     let overlayActive = true;
@@ -43,11 +58,17 @@ function showOverlay(with_timer) {
     overlay.style.color = 'black';
     overlay.style.opacity = '1';
 
-    document.body.appendChild(overlay);
+    const appendOverlay = () => {
+        const parent = document.body || document.documentElement;
+        if (parent && !parent.contains(overlay)) {
+            parent.appendChild(overlay);
+        }
+    };
+    appendOverlay();
 
     const observer = new MutationObserver(() => {
-        if (overlayActive && !document.body.contains(overlay)) {
-            document.body.appendChild(overlay);
+        if (overlayActive) {
+            appendOverlay();
         }
 
         if (!with_timer) {
@@ -65,7 +86,7 @@ function showOverlay(with_timer) {
         }
     });
 
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
 
     if (with_timer) {
       setTimeout(() => {
@@ -91,32 +112,14 @@ function main() {
       }
   }
 
-  selectors.forEach(s => {
-    // console.log("s", s)
-    document.querySelectorAll(s).forEach(e => {
-      // console.log("e", e)
-      // e.remove();
-      e.style.display = 'none';
-    });
-  });
-
-  // Kan VOD specific hide rules
-  document.querySelectorAll('.news-card img').forEach(e => {
-    e.style.opacity = '0';
-  });
-
-  document.querySelectorAll('.info-description').forEach(e => {
-    e.style.display = 'none';
-  });
-
+  // Remove poster from video elements
   document.querySelectorAll('video').forEach(v => {
     if (v.hasAttribute('poster')) {
       v.removeAttribute('poster');
     }
   });
-
 }
 
 main();
 const observer = new MutationObserver(main);
-observer.observe(document.body, { childList: true, subtree: true });
+observer.observe(document.documentElement, { childList: true, subtree: true });

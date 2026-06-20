@@ -7,7 +7,7 @@
     {
       "matches": ["https://www.mlb.com/tv/*", "https://www.dazn.com/*", "https://*.nba.com/*", "https://www.kan.org.il/*"], 
       "js": ["main.js"],
-      "run_at": "document_idle"
+      "run_at": "document_start"
     }
   ],
   "permissions": ["scripting"]
