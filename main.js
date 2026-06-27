@@ -16,6 +16,9 @@ const selectors = [
   '[data-test-id="DURATION"]',                      // total duration
   // Kan World Cup
   '.col-stats',
+  '.sticky-sidebar-container',
+  '.rgpl-progress-control',
+  '.rgpl-controls-time-duration',
 
   // NBA
   '#progress-bar-container',                        // entire progress bar and time container
