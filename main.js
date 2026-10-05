@@ -16,6 +16,9 @@ const selectors = [
   '[class*="Finalstyle__SidebarTabs"]',                                                 // sidebar tabs fallback
   '[class*="Finalstyle__SideTabContentWrapper"]',                                       // sidebar content fallback
   '[class*="HighlightsPlayliststyle__HighlightCardListWrapper"]',                       // gameday highlights playlist cards
+  '[class*="MiniScoreboardstyle__MiniScoreboardWrapper"]',                              // gameday top mini-scoreboard carousel
+  '[class*="MiniScoreboard"]',                                                          // gameday mini-scoreboard elements
+  '.p-mini-scoreboard',                                                                 // mlb global mini-scoreboard
 
   // DAZN NFL
   '[data-test-id="SCRUB_BAR"]',                     // seek bar
