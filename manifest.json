@@ -5,9 +5,10 @@
   "description": "Remove spoilery things (like progress bars) in streams",
   "content_scripts": [
     {
-      "matches": ["https://www.mlb.com/tv/*", "https://www.dazn.com/*", "https://*.nba.com/*", "https://www.kan.org.il/*"], 
+      "matches": ["https://www.mlb.com/*", "https://www.dazn.com/*", "https://*.nba.com/*", "https://www.kan.org.il/*"], 
       "js": ["main.js"],
-      "run_at": "document_start"
+      "run_at": "document_start",
+      "all_frames": true
     }
   ],
   "permissions": ["scripting"]

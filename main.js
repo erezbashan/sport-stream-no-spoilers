@@ -6,6 +6,16 @@ const selectors = [
   '.ViewController.GamePanelStateViewController.live',  // side bar
   '.matchup.matchup-pitching-atbat',                // stats
   '.matchup.matchup-deck-hole',                     // stats
+  '.embedded_linescore_container',                  // linescore / inning scores table
+  '[class*="Playlist__Wrapper"]',                   // video playlist / recommendations (e.g. most popular)
+  '[class*="Cardstyle__CardWrapper"]:has([data-mlb-test="teamSummaryMatchupWrapper"])', // gameday score and linescore card
+  '[class*="Cardstyle__CardWrapper"]:has([class*="TeamSummaryMatchupstyle"])',           // gameday score card fallback
+  '[data-mlb-test="teamSummaryMatchupWrapper"]',    // score summary fallback
+  '[class*="Finalstyle__FinalLinescoreWrapper"]',   // linescore decisions fallback
+  '[class*="Finalstyle__Col"]:has([class*="SidebarTabs"])',                              // gameday summary & insights sidebar column
+  '[class*="Finalstyle__SidebarTabs"]',                                                 // sidebar tabs fallback
+  '[class*="Finalstyle__SideTabContentWrapper"]',                                       // sidebar content fallback
+  '[class*="HighlightsPlayliststyle__HighlightCardListWrapper"]',                       // gameday highlights playlist cards
 
   // DAZN NFL
   '[data-test-id="SCRUB_BAR"]',                     // seek bar
@@ -35,6 +45,10 @@ styleEl.textContent = `
   }
   .info-description { 
       display: none !important; 
+  }
+  video::-webkit-media-controls-timeline,
+  video::-webkit-media-controls-time-remaining-display {
+      display: none !important;
   }
 `;
 document.documentElement.appendChild(styleEl);
