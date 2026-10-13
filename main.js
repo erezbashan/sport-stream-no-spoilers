@@ -1,4 +1,6 @@
+const APP_VERSION = '1.2';
 const dazn_stream_pattern = /^https:\/\/www\.dazn\.com\/[^/]+\/fixture\/.+$/;
+
 const selectors = [
   // MLB
   '.scrubber-bar-wrapper',                          // seek bar
@@ -6,7 +8,6 @@ const selectors = [
   '.ViewController.GamePanelStateViewController.live',  // side bar
   '.matchup.matchup-pitching-atbat',                // stats
   '.matchup.matchup-deck-hole',                     // stats
-  '.embedded_linescore_container',                  // linescore / inning scores table
   '[class*="Playlist__Wrapper"]',                   // video playlist / recommendations (e.g. most popular)
   '[class*="Cardstyle__CardWrapper"]:has([data-mlb-test="teamSummaryMatchupWrapper"])', // gameday score and linescore card
   '[class*="Cardstyle__CardWrapper"]:has([class*="TeamSummaryMatchupstyle"])',           // gameday score card fallback
@@ -54,8 +55,172 @@ styleEl.textContent = `
   video::-webkit-media-controls-time-remaining-display {
       display: none !important;
   }
+
+  /* MLB Linescore - Non-Spoiler 9 Innings Jump Bar */
+  .embedded_linescore_container {
+      display: block !important;
+      visibility: visible !important;
+  }
+  .embedded_linescore .status-row {
+      display: none !important;
+  }
+  .embedded_linescore .scores,
+  .embedded_linescore .runs-column-background-faker,
+  .embedded_linescore .fixed:has(.scores) {
+      display: none !important;
+  }
+  /* Always hide extra innings (innings >= 10) */
+  .embedded_linescore th.inningHeader:nth-child(n+10),
+  .embedded_linescore tr.away td.inning:nth-child(n+10),
+  .embedded_linescore tr.home td.inning:nth-child(n+10) {
+      display: none !important;
+  }
+  /* Hide runs, "x", and numbers while keeping cells clickable */
+  .embedded_linescore td.inning {
+      color: transparent !important;
+      text-shadow: none !important;
+      position: relative !important;
+      cursor: pointer !important;
+      user-select: none !important;
+  }
+  /* Neutral clickable indicators: ▲ for top (away), ▼ for bottom (home) */
+  .embedded_linescore tr.away td.inning::after {
+      content: '▲';
+      font-size: 8px;
+      color: rgba(255, 255, 255, 0.45);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+  }
+  .embedded_linescore tr.home td.inning::after {
+      content: '▼';
+      font-size: 8px;
+      color: rgba(255, 255, 255, 0.45);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+  }
+  .embedded_linescore td.inning:hover::after {
+      color: #ffffff !important;
+      transform: translate(-50%, -50%) scale(1.3);
+  }
+  .embedded_linescore td.inning.active::after {
+      color: #ffd700 !important;
+  }
+  .embedded_linescore .inning_button {
+      display: none !important;
+  }
+
+  /* Custom Seek Controls (+60s / -60s) */
+  .custom-seek-control {
+      background: none !important;
+      border: none !important;
+      width: 32px !important;
+      height: 30px !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      color: #c4c4c4 !important;
+      cursor: pointer !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      vertical-align: middle !important;
+      outline: none !important;
+      transition: color 0.15s ease, transform 0.1s ease;
+  }
+  .custom-seek-control:hover {
+      color: #ffffff !important;
+  }
+  .custom-seek-control:hover svg path,
+  .custom-seek-control:hover svg text {
+      fill: #ffffff !important;
+  }
+  .custom-seek-control:active {
+      transform: scale(0.9);
+  }
 `;
 document.documentElement.appendChild(styleEl);
+
+function seekVideo(seconds) {
+  const video = document.querySelector('video');
+  if (!video) return;
+  const current = video.currentTime;
+  const duration = video.duration || Infinity;
+  video.currentTime = Math.max(0, Math.min(duration, current + seconds));
+}
+
+const REWIND_60_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" tabindex="-1" focusable="false">
+    <g fill="none" fill-rule="evenodd">
+        <path fill="currentColor" d="M5.904 14.092a.9.9 0 0 1 .9.9c0 4.517 3.675 8.192 8.192 8.192s8.192-3.671 8.192-8.188c0-4.517-3.675-8.192-8.192-8.192a8.1 8.1 0 0 0-3.718.893 8.306 8.306 0 0 0-2.196 1.636h2.45a.9.9 0 0 1 0 1.8H7.204a.9.9 0 0 1-.9-.9V5.9a.9.9 0 0 1 1.8 0v1.867A9.957 9.957 0 0 1 14.996 5c5.51 0 9.996 4.485 9.996 9.996 0 5.51-4.485 9.996-9.996 9.996-5.51 0-9.996-4.485-9.996-9.996a.91.91 0 0 1 .904-.904z"/>
+        <text x="15" y="17.5" fill="currentColor" font-size="8.5" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Arial, sans-serif" text-anchor="middle">60</text>
+    </g>
+</svg>
+`;
+
+const FORWARD_60_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" tabindex="-1" focusable="false">
+    <g fill="none" fill-rule="evenodd">
+        <path fill="currentColor" transform="scale(-1,1) translate(-30,0)" d="M5.904 14.092a.9.9 0 0 1 .9.9c0 4.517 3.675 8.192 8.192 8.192s8.192-3.671 8.192-8.188c0-4.517-3.675-8.192-8.192-8.192a8.1 8.1 0 0 0-3.718.893 8.306 8.306 0 0 0-2.196 1.636h2.45a.9.9 0 0 1 0 1.8H7.204a.9.9 0 0 1-.9-.9V5.9a.9.9 0 0 1 1.8 0v1.867A9.957 9.957 0 0 1 14.996 5c5.51 0 9.996 4.485 9.996 9.996 0 5.51-4.485 9.996-9.996 9.996-5.51 0-9.996-4.485-9.996-9.996a.91.91 0 0 1 .904-.904z"/>
+        <text x="15" y="17.5" fill="currentColor" font-size="8.5" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Arial, sans-serif" text-anchor="middle">60</text>
+    </g>
+</svg>
+`;
+
+function createSeekButton(seconds, id, title, svgHtml) {
+  const btn = document.createElement('button');
+  btn.id = id;
+  btn.type = 'button';
+  btn.className = 'media-control custom-seek-control';
+  btn.title = `${title} • v${APP_VERSION}`;
+  btn.setAttribute('aria-label', title);
+  btn.innerHTML = svgHtml.trim();
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    seekVideo(seconds);
+  });
+  return btn;
+}
+
+function injectMlbSeekButtons() {
+  if (!window.location.hostname.includes('mlb.com')) return;
+  const quickBtns = document.querySelectorAll('.quick-rewind-control');
+  if (quickBtns.length === 0) return;
+
+  const rewind10Btn = quickBtns[0];
+  const forward10Btn = quickBtns.length > 1 ? quickBtns[1] : null;
+
+  if (rewind10Btn && rewind10Btn.parentNode && !document.getElementById('custom-rewind-60')) {
+    const rewind60 = createSeekButton(-60, 'custom-rewind-60', 'Rewind 60 seconds (Shift+Left)', REWIND_60_SVG);
+    rewind10Btn.parentNode.insertBefore(rewind60, rewind10Btn);
+  }
+
+  if (forward10Btn && forward10Btn.parentNode && !document.getElementById('custom-forward-60')) {
+    const forward60 = createSeekButton(60, 'custom-forward-60', 'Fast forward 60 seconds (Shift+Right)', FORWARD_60_SVG);
+    forward10Btn.parentNode.insertBefore(forward60, forward10Btn.nextSibling);
+  }
+}
+
+// Global keyboard shortcuts (Shift+Right for +60s, Shift+Left for -60s)
+window.addEventListener('keydown', (e) => {
+  if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable) {
+    return;
+  }
+  if (e.shiftKey && e.key === 'ArrowRight') {
+    e.preventDefault();
+    e.stopPropagation();
+    seekVideo(60);
+  } else if (e.shiftKey && e.key === 'ArrowLeft') {
+    e.preventDefault();
+    e.stopPropagation();
+    seekVideo(-60);
+  }
+}, true);
 
 function showOverlay(with_timer) {
     let overlayActive = true;
@@ -70,14 +235,26 @@ function showOverlay(with_timer) {
     overlay.style.backgroundColor = 'white';
     overlay.style.zIndex = '2147483647';
     overlay.style.display = 'flex';
+    overlay.style.flexDirection = 'column';
     overlay.style.alignItems = 'center';
     overlay.style.justifyContent = 'center';
     overlay.style.fontSize = '4rem';
     overlay.style.fontWeight = 'bold';
     overlay.style.textAlign = 'center';
-    overlay.innerText = "Waiting to avoid spoilers";
     overlay.style.color = 'black';
     overlay.style.opacity = '1';
+
+    const titleEl = document.createElement('div');
+    titleEl.innerText = "Waiting to avoid spoilers";
+    overlay.appendChild(titleEl);
+
+    const versionEl = document.createElement('div');
+    versionEl.style.fontSize = '1.2rem';
+    versionEl.style.fontWeight = 'normal';
+    versionEl.style.color = '#888';
+    versionEl.style.marginTop = '1.5rem';
+    versionEl.innerText = `Sport Stream No Spoilers v${APP_VERSION}`;
+    overlay.appendChild(versionEl);
 
     const appendOverlay = () => {
         const parent = document.body || document.documentElement;
@@ -132,6 +309,9 @@ function main() {
           showOverlay(false);
       }
   }
+
+  // Inject custom seek controls on MLB.TV
+  injectMlbSeekButtons();
 
   // Remove poster from video elements
   document.querySelectorAll('video').forEach(v => {
