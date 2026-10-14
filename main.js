@@ -1,4 +1,4 @@
-const APP_VERSION = '1.3';
+const APP_VERSION = '1.4';
 const dazn_stream_pattern = /^https:\/\/www\.dazn\.com\/[^/]+\/fixture\/.+$/;
 
 const selectors = [
@@ -153,20 +153,20 @@ function seekVideo(seconds) {
   video.currentTime = Math.max(0, Math.min(duration, current + seconds));
 }
 
-const REWIND_60_SVG = `
+const REWIND_70_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" tabindex="-1" focusable="false">
     <g fill="none" fill-rule="evenodd">
         <path fill="currentColor" d="M5.904 14.092a.9.9 0 0 1 .9.9c0 4.517 3.675 8.192 8.192 8.192s8.192-3.671 8.192-8.188c0-4.517-3.675-8.192-8.192-8.192a8.1 8.1 0 0 0-3.718.893 8.306 8.306 0 0 0-2.196 1.636h2.45a.9.9 0 0 1 0 1.8H7.204a.9.9 0 0 1-.9-.9V5.9a.9.9 0 0 1 1.8 0v1.867A9.957 9.957 0 0 1 14.996 5c5.51 0 9.996 4.485 9.996 9.996 0 5.51-4.485 9.996-9.996 9.996-5.51 0-9.996-4.485-9.996-9.996a.91.91 0 0 1 .904-.904z"/>
-        <text x="15" y="17.5" fill="currentColor" font-size="8.5" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Arial, sans-serif" text-anchor="middle">60</text>
+        <text x="15" y="17.5" fill="currentColor" font-size="8.5" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Arial, sans-serif" text-anchor="middle">70</text>
     </g>
 </svg>
 `;
 
-const FORWARD_60_SVG = `
+const FORWARD_70_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" tabindex="-1" focusable="false">
     <g fill="none" fill-rule="evenodd">
         <path fill="currentColor" transform="scale(-1,1) translate(-30,0)" d="M5.904 14.092a.9.9 0 0 1 .9.9c0 4.517 3.675 8.192 8.192 8.192s8.192-3.671 8.192-8.188c0-4.517-3.675-8.192-8.192-8.192a8.1 8.1 0 0 0-3.718.893 8.306 8.306 0 0 0-2.196 1.636h2.45a.9.9 0 0 1 0 1.8H7.204a.9.9 0 0 1-.9-.9V5.9a.9.9 0 0 1 1.8 0v1.867A9.957 9.957 0 0 1 14.996 5c5.51 0 9.996 4.485 9.996 9.996 0 5.51-4.485 9.996-9.996 9.996-5.51 0-9.996-4.485-9.996-9.996a.91.91 0 0 1 .904-.904z"/>
-        <text x="15" y="17.5" fill="currentColor" font-size="8.5" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Arial, sans-serif" text-anchor="middle">60</text>
+        <text x="15" y="17.5" fill="currentColor" font-size="8.5" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Arial, sans-serif" text-anchor="middle">70</text>
     </g>
 </svg>
 `;
@@ -241,7 +241,7 @@ function findForward10Button(container, rewind10Btn) {
       }
     }
 
-    // 5. Positional fallback: [custom-rewind-60, rewind10, playPause, forward10, volume, ...]
+    // 5. Positional fallback: [custom-rewind-70, rewind10, playPause, forward10, volume, ...]
     const nonCustom = children.filter(b => !b.id?.includes('custom-'));
     if (nonCustom.length >= 3 && nonCustom[0] === rewind10Btn) {
       return nonCustom[2];
@@ -260,27 +260,33 @@ function injectMlbSeekButtons() {
   const container = rewind10Btn.parentNode;
   const forward10Btn = findForward10Button(container, rewind10Btn);
 
-  // 1. Insert Rewind 60 before Rewind 10
-  const existingRewind60 = document.getElementById('custom-rewind-60');
-  if (!existingRewind60 || !container.contains(existingRewind60)) {
-    if (existingRewind60) existingRewind60.remove();
-    const rewind60 = createSeekButton(-60, 'custom-rewind-60', 'Rewind 60 seconds (Shift+Left)', REWIND_60_SVG);
-    container.insertBefore(rewind60, rewind10Btn);
+  // Clean up legacy 60s buttons if present
+  const oldRewind60 = document.getElementById('custom-rewind-60');
+  if (oldRewind60) oldRewind60.remove();
+  const oldForward60 = document.getElementById('custom-forward-60');
+  if (oldForward60) oldForward60.remove();
+
+  // 1. Insert Rewind 70 before Rewind 10
+  const existingRewind70 = document.getElementById('custom-rewind-70');
+  if (!existingRewind70 || !container.contains(existingRewind70)) {
+    if (existingRewind70) existingRewind70.remove();
+    const rewind70 = createSeekButton(-70, 'custom-rewind-70', 'Rewind 70 seconds (Shift+Left)', REWIND_70_SVG);
+    container.insertBefore(rewind70, rewind10Btn);
   }
 
-  // 2. Insert Forward 60 after Forward 10
+  // 2. Insert Forward 70 after Forward 10
   if (forward10Btn && forward10Btn.parentNode) {
     const forwardContainer = forward10Btn.parentNode;
-    const existingForward60 = document.getElementById('custom-forward-60');
-    if (!existingForward60 || !forwardContainer.contains(existingForward60)) {
-      if (existingForward60) existingForward60.remove();
-      const forward60 = createSeekButton(60, 'custom-forward-60', 'Fast forward 60 seconds (Shift+Right)', FORWARD_60_SVG);
-      forwardContainer.insertBefore(forward60, forward10Btn.nextSibling);
+    const existingForward70 = document.getElementById('custom-forward-70');
+    if (!existingForward70 || !forwardContainer.contains(existingForward70)) {
+      if (existingForward70) existingForward70.remove();
+      const forward70 = createSeekButton(70, 'custom-forward-70', 'Fast forward 70 seconds (Shift+Right)', FORWARD_70_SVG);
+      forwardContainer.insertBefore(forward70, forward10Btn.nextSibling);
     }
   }
 }
 
-// Global keyboard shortcuts (Shift+Right for +60s, Shift+Left for -60s)
+// Global keyboard shortcuts (Shift+Right for +70s, Shift+Left for -70s)
 window.addEventListener('keydown', (e) => {
   if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable) {
     return;
@@ -288,11 +294,11 @@ window.addEventListener('keydown', (e) => {
   if (e.shiftKey && e.key === 'ArrowRight') {
     e.preventDefault();
     e.stopPropagation();
-    seekVideo(60);
+    seekVideo(70);
   } else if (e.shiftKey && e.key === 'ArrowLeft') {
     e.preventDefault();
     e.stopPropagation();
-    seekVideo(-60);
+    seekVideo(-70);
   }
 }, true);
 

@@ -1,1 +1,2 @@
 - Always read and follow the instructions in all files under .agents/rules/
+- Whenever any changes are made to the extension files (main.js, manifest.json, etc.), immediately copy them to: `/Users/erezbashan/Library/CloudStorage/GoogleDrive-erez.bashan@gmail.com/My Drive/Erez/sport-stream-no-spoilers/`

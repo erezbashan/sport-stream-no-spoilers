@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Sport Stream No Spoilers",
-  "version": "1.3",
+  "version": "1.4",
   "description": "Remove spoilery things (like progress bars) in streams",
   "content_scripts": [
     {
