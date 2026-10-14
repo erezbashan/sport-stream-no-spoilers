@@ -1,4 +1,4 @@
-const APP_VERSION = '1.2';
+const APP_VERSION = '1.3';
 const dazn_stream_pattern = /^https:\/\/www\.dazn\.com\/[^/]+\/fixture\/.+$/;
 
 const selectors = [
@@ -187,22 +187,96 @@ function createSeekButton(seconds, id, title, svgHtml) {
   return btn;
 }
 
-function injectMlbSeekButtons() {
-  if (!window.location.hostname.includes('mlb.com')) return;
-  const quickBtns = document.querySelectorAll('.quick-rewind-control');
-  if (quickBtns.length === 0) return;
-
-  const rewind10Btn = quickBtns[0];
-  const forward10Btn = quickBtns.length > 1 ? quickBtns[1] : null;
-
-  if (rewind10Btn && rewind10Btn.parentNode && !document.getElementById('custom-rewind-60')) {
-    const rewind60 = createSeekButton(-60, 'custom-rewind-60', 'Rewind 60 seconds (Shift+Left)', REWIND_60_SVG);
-    rewind10Btn.parentNode.insertBefore(rewind60, rewind10Btn);
+function findForward10Button(container, rewind10Btn) {
+  // 1. Try finding by aria-label or forward classes across container or document
+  const forwardCandidates = (container || document).querySelectorAll(
+    'button[aria-label*="forward" i], button[aria-label*="Fast" i], .quick-forward-control, .fast-forward-control, [data-testid*="forward" i]'
+  );
+  for (const el of forwardCandidates) {
+    if (el !== rewind10Btn && !el.id?.includes('custom-')) return el;
   }
 
-  if (forward10Btn && forward10Btn.parentNode && !document.getElementById('custom-forward-60')) {
-    const forward60 = createSeekButton(60, 'custom-forward-60', 'Fast forward 60 seconds (Shift+Right)', FORWARD_60_SVG);
-    forward10Btn.parentNode.insertBefore(forward60, forward10Btn.nextSibling);
+  // 2. Check if multiple .quick-rewind-control exist
+  const quickBtns = document.querySelectorAll('.quick-rewind-control');
+  if (quickBtns.length > 1) {
+    for (let i = 1; i < quickBtns.length; i++) {
+      if (quickBtns[i] !== rewind10Btn && !quickBtns[i].id?.includes('custom-')) {
+        return quickBtns[i];
+      }
+    }
+  }
+
+  if (container) {
+    const children = Array.from(container.children).filter(el => 
+      el.tagName === 'BUTTON' || el.classList.contains('media-control') || el.querySelector('svg')
+    );
+
+    // 3. Find Play/Pause button in container, then take the next sibling button
+    const playPauseIdx = children.findIndex(b => {
+      const aria = (b.getAttribute('aria-label') || '').toLowerCase();
+      const title = (b.getAttribute('title') || '').toLowerCase();
+      const cls = (b.className || '').toLowerCase();
+      return aria.includes('play') || aria.includes('pause') ||
+             title.includes('play') || title.includes('pause') ||
+             cls.includes('play') || cls.includes('pause');
+    });
+
+    if (playPauseIdx !== -1 && children[playPauseIdx + 1]) {
+      const nextBtn = children[playPauseIdx + 1];
+      const nextAria = (nextBtn.getAttribute('aria-label') || '').toLowerCase();
+      const nextCls = (nextBtn.className || '').toLowerCase();
+      if (!nextAria.includes('volume') && !nextAria.includes('mute') &&
+          !nextCls.includes('volume') && !nextCls.includes('mute') &&
+          !nextBtn.id?.includes('custom-')) {
+        return nextBtn;
+      }
+    }
+
+    // 4. Find button containing SVG with scale(-1,1) or translate(-30,0) (MLB forward icon transform)
+    for (const btn of children) {
+      if (btn === rewind10Btn || btn.id?.includes('custom-')) continue;
+      const html = btn.innerHTML;
+      if (html.includes('scale(-1') || html.includes('translate(-30')) {
+        return btn;
+      }
+    }
+
+    // 5. Positional fallback: [custom-rewind-60, rewind10, playPause, forward10, volume, ...]
+    const nonCustom = children.filter(b => !b.id?.includes('custom-'));
+    if (nonCustom.length >= 3 && nonCustom[0] === rewind10Btn) {
+      return nonCustom[2];
+    }
+  }
+
+  return null;
+}
+
+function injectMlbSeekButtons() {
+  if (!window.location.hostname.includes('mlb.com')) return;
+
+  const rewind10Btn = document.querySelector('.quick-rewind-control, button[aria-label*="Rewind" i]');
+  if (!rewind10Btn || !rewind10Btn.parentNode) return;
+
+  const container = rewind10Btn.parentNode;
+  const forward10Btn = findForward10Button(container, rewind10Btn);
+
+  // 1. Insert Rewind 60 before Rewind 10
+  const existingRewind60 = document.getElementById('custom-rewind-60');
+  if (!existingRewind60 || !container.contains(existingRewind60)) {
+    if (existingRewind60) existingRewind60.remove();
+    const rewind60 = createSeekButton(-60, 'custom-rewind-60', 'Rewind 60 seconds (Shift+Left)', REWIND_60_SVG);
+    container.insertBefore(rewind60, rewind10Btn);
+  }
+
+  // 2. Insert Forward 60 after Forward 10
+  if (forward10Btn && forward10Btn.parentNode) {
+    const forwardContainer = forward10Btn.parentNode;
+    const existingForward60 = document.getElementById('custom-forward-60');
+    if (!existingForward60 || !forwardContainer.contains(existingForward60)) {
+      if (existingForward60) existingForward60.remove();
+      const forward60 = createSeekButton(60, 'custom-forward-60', 'Fast forward 60 seconds (Shift+Right)', FORWARD_60_SVG);
+      forwardContainer.insertBefore(forward60, forward10Btn.nextSibling);
+    }
   }
 }
 
